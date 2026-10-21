@@ -59,26 +59,83 @@
         <hr />
  
         <h5 class="text-center mb-3">Cuotas</h5>
-        <div class="row g-3 justify-content-center">
-            <div class="col-md-3">
-                <div class="border rounded text-center py-3">
-                    <div class="text-muted">1 · @Model.HomeTeamName</div>
-                    <div class="fs-3 fw-bold">@Model.HomeOdds.ToString("0.00")</div>
+        @{
+            // Rule #1 (the service checks it again): only Scheduled matches in the future take bets
+            var acceptsBets = Model.Status == MatchStatus.Scheduled && Model.Date > DateTime.UtcNow;
+        }
+        @if (acceptsBets && User.IsInRole("Apostador"))
+        {
+            @* Betting panel: each odds box is a submit button (name="Pick", value=Home|Draw|Away).
+               Who bets is never sent: the controller reads it from the cookie. *@
+            <form asp-controller="Bets" asp-action="Place" method="post">
+                <input type="hidden" name="MatchId" value="@Model.Id" />
+
+                <div class="row justify-content-center mb-3">
+                    <div class="col-md-4">
+                        <label for="Amount" class="form-label">Monto (FutCoins)</label>
+                        <input type="number" id="Amount" name="Amount" class="form-control text-center"
+                               min="1" step="1" placeholder="Ej: 5000" required />
+                    </div>
+                </div>
+
+                <div class="row g-3 justify-content-center">
+                    <div class="col-md-3">
+                        <button type="submit" name="Pick" value="@BetPick.Home"
+                                class="btn btn-outline-success w-100 py-3">
+                            <div>1 · @Model.HomeTeamName</div>
+                            <div class="fs-3 fw-bold">@Model.HomeOdds.ToString("0.00")</div>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" name="Pick" value="@BetPick.Draw"
+                                class="btn btn-outline-success w-100 py-3">
+                            <div>X · Empate</div>
+                            <div class="fs-3 fw-bold">@Model.DrawOdds.ToString("0.00")</div>
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" name="Pick" value="@BetPick.Away"
+                                class="btn btn-outline-success w-100 py-3">
+                            <div>2 · @Model.AwayTeamName</div>
+                            <div class="fs-3 fw-bold">@Model.AwayOdds.ToString("0.00")</div>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-center text-muted small mt-3 mb-0">
+                    Escribe el monto y haz clic en tu selección. La cuota queda congelada al apostar.
+                </p>
+            </form>
+        }
+        else
+        {
+            <div class="row g-3 justify-content-center">
+                <div class="col-md-3">
+                    <div class="border rounded text-center py-3">
+                        <div class="text-muted">1 · @Model.HomeTeamName</div>
+                        <div class="fs-3 fw-bold">@Model.HomeOdds.ToString("0.00")</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded text-center py-3">
+                        <div class="text-muted">X · Empate</div>
+                        <div class="fs-3 fw-bold">@Model.DrawOdds.ToString("0.00")</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="border rounded text-center py-3">
+                        <div class="text-muted">2 · @Model.AwayTeamName</div>
+                        <div class="fs-3 fw-bold">@Model.AwayOdds.ToString("0.00")</div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="border rounded text-center py-3">
-                    <div class="text-muted">X · Empate</div>
-                    <div class="fs-3 fw-bold">@Model.DrawOdds.ToString("0.00")</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="border rounded text-center py-3">
-                    <div class="text-muted">2 · @Model.AwayTeamName</div>
-                    <div class="fs-3 fw-bold">@Model.AwayOdds.ToString("0.00")</div>
-                </div>
-            </div>
-        </div>
+
+            @if (acceptsBets && !User.Identity!.IsAuthenticated)
+            {
+                <p class="text-center mt-3 mb-0">
+                    <a asp-controller="Account" asp-action="Login">Inicia sesión</a> como apostador para apostar.
+                </p>
+            }
+        }
     </div>
  
     <div class="card-footer d-flex justify-content-between align-items-center">
@@ -87,13 +144,6 @@
             @if (User.IsInRole("Admin"))
             {
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Editar</a>
-            }
-            @if (Model.Status == MatchStatus.Scheduled)
-            {
-                <button class="btn btn-success" disabled
-                        title="Disponible cuando implementemos las apuestas">
-                    Apostar (Módulo 8)
-                </button>
             }
         </div>
     </div>
