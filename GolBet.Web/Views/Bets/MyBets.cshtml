@@ -10,12 +10,11 @@
 
 @if (!Model.Any())
 {
-    <div class="text-center py-5">
-        <h1 class="display-1">🎟️</h1>
-        <h3>Aún no tienes apuestas</h3>
-        <p class="text-muted">Elige un partido programado y apuesta tus FutCoins.</p>
-        <a asp-controller="Matches" asp-action="Index" asp-route-status="@MatchStatus.Scheduled"
-           class="btn btn-success">Ver partidos programados</a>
+    <div class="text-center py-5 text-muted">
+        <p class="fs-5">Aún no has hecho ninguna apuesta.</p>
+        <a asp-controller="Matches" asp-action="Index" class="btn btn-success">
+            Ver la cartelera
+        </a>
     </div>
 }
 else
@@ -28,34 +27,31 @@ else
                 <th>Selección</th>
                 <th class="text-end">Monto</th>
                 <th class="text-end">Cuota</th>
-                <th class="text-end">Ganancia posible</th>
-                <th class="text-center">Estado</th>
+                <th class="text-end">Ganancia potencial</th>
+                <th>Estado</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var bet in Model)
             {
                 <tr>
-                    <td class="fw-bold">@bet.MatchHomeTeamName vs @bet.MatchAwayTeamName</td>
-                    <td>@bet.MatchDate.ToColombiaTime().ToString("dd MMM yyyy · h:mm tt")</td>
+                    <td class="fw-bold">
+                        @bet.MatchHomeTeamName vs @bet.MatchAwayTeamName
+                    </td>
+                    <td>@bet.MatchDate.ToColombiaTime().ToString("ddd dd MMM · h:mm tt")</td>
                     <td>
-                        @switch (bet.Pick)
+                        @(bet.Pick switch
                         {
-                            case BetPick.Home:
-                                <span>1 · @bet.MatchHomeTeamName</span>
-                                break;
-                            case BetPick.Draw:
-                                <span>X · Empate</span>
-                                break;
-                            case BetPick.Away:
-                                <span>2 · @bet.MatchAwayTeamName</span>
-                                break;
-                        }
+                            BetPick.Home => $"1 · {bet.MatchHomeTeamName}",
+                            BetPick.Draw => "X · Empate",
+                            BetPick.Away => $"2 · {bet.MatchAwayTeamName}",
+                            _ => "-"
+                        })
                     </td>
                     <td class="text-end">@bet.Amount.ToString("N0")</td>
                     <td class="text-end">@bet.OddsAtPlacement.ToString("0.00")</td>
-                    <td class="text-end">@bet.PotentialPayout.ToString("N0")</td>
-                    <td class="text-center">
+                    <td class="text-end fw-bold">@bet.PotentialPayout.ToString("N0")</td>
+                    <td>
                         @switch (bet.Status)
                         {
                             case BetStatus.Pending:
@@ -65,7 +61,7 @@ else
                                 <span class="badge bg-success">Ganada</span>
                                 break;
                             case BetStatus.Lost:
-                                <span class="badge bg-danger">Perdida</span>
+                                <span class="badge bg-secondary">Perdida</span>
                                 break;
                         }
                     </td>
